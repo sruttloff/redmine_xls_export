@@ -3,7 +3,7 @@ module XlseAssetHelpers
   PLUGIN_NAME = File.expand_path('../../*', __FILE__).match(/.*\/(.*)\/\*$/)[1].to_sym
 
   def self.settings
-    Setting["plugin_#{PLUGIN_NAME.to_s}"]
+    Setting["plugin_#{PLUGIN_NAME}"].with_indifferent_access
   end
 
   def self.plugin_asset_link(asset_name,options={})

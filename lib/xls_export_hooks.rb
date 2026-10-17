@@ -1,36 +1,17 @@
 require_relative 'xlse_asset_helpers'
 
 class XlsExportHooks < Redmine::Hook::ViewListener
-  def view_issues_index_bottom(context={})
-    if context[:query].valid? && !context[:issues].empty?
-      ret_str =''
-      ret_str << stylesheet_link_tag("xls_export.css", :plugin => XlseAssetHelpers::PLUGIN_NAME, :media => "screen")
-      ret_str << '<p class="other-formats">' << l(:label_plugin_xlse_export_format)
-      ret_str << content_tag('span', link_to(l(:label_plugin_xlse_export_format_quick),
-                                             hook_url_for({ :controller => 'xls_export', :action => 'export_current', :project_id => context[:project] }),
-                                             { :class => 'xls', :rel => 'nofollow', :title => l(:label_plugin_xlse_export_format_quick_tooltip) }))
-      ret_str << content_tag('span', link_to(l(:label_plugin_xlse_export_format_detailed),
-                                             hook_url_for({ :controller => 'xls_export', :action => 'index', :project_id => context[:project] }),
-                                             { :class => 'xlse', :title => l(:label_plugin_xlse_export_format_detailed_tooltip) }))
-      ret_str << '</p>'
+  def view_issues_index_bottom(context = {})
+    query = context[:query]
+    return unless query&.valid? && context[:issues].present?
 
-      return ret_str.html_safe
-    end
-  end
-
-  def suburi(url)
-    baseurl = Redmine::Utils.relative_url_root
-    if not url.match(/^#{baseurl}/)
-      url = baseurl + url
-    end
-    return url
-  end
-
-  def hook_url_for(url)
-    if Rails::VERSION::MAJOR >= 3 && Redmine::Utils::relative_url_root != ''
-      suburi("#{url_for(url)}")
-    else
-      url
-    end
+    options = query.as_params.merge(controller: 'xls_export', project_id: context[:project])
+    quick = link_to(l(:label_plugin_xlse_export_format_quick), options.merge(action: 'export_current'),
+                    class: 'xls', rel: 'nofollow', title: l(:label_plugin_xlse_export_format_quick_tooltip))
+    detailed = link_to(l(:label_plugin_xlse_export_format_detailed), options.merge(action: 'index'),
+                       class: 'xlse', title: l(:label_plugin_xlse_export_format_detailed_tooltip))
+    stylesheet_link_tag('xls_export.css', plugin: XlseAssetHelpers::PLUGIN_NAME, media: 'screen') +
+      content_tag(:p, safe_join([l(:label_plugin_xlse_export_format), content_tag(:span, quick),
+                                content_tag(:span, detailed)], ' '), class: 'other-formats')
   end
 end

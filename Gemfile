@@ -1,11 +1,4 @@
 source 'https://rubygems.org'
 
-gem "spreadsheet"
-
-group :export_attachments do
-  gem "zip-zip"
-end
-
-group :test do
-  gem 'launchy'
-end
+gem 'spreadsheet', '~> 1.3'
+# Rubyzip is provided by Redmine 6.1's own Gemfile.

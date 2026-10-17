@@ -1,4 +1,5 @@
 en:
+  label_plugin_xlse_too_many_columns: "XLS supports at most 256 columns. Enable selected columns only and select fewer columns."
   label_plugin_xlse_legend_0: "Columns options"
   label_plugin_xlse_legend_1: "Export options"
   label_plugin_xlse_legend_1a: "Date format options"

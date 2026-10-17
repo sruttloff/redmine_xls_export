@@ -1,29 +1,69 @@
-name: CI
+name: Redmine 6.1 compatibility
+
 on:
   push:
   pull_request:
-  schedule:
-    - cron: '0 20 * * *' # JST 5:00
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
-  test:
+  redmine-61:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        redmine:
-          - v4.0
-          - v4.1
-          - trunk
-        ruby:
-          - v2.3
-          - v2.4
-          - v2.5
-          - v2.6
-
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: redmine_test
+          MYSQL_DATABASE: redmine_xls_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -predmine_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      RAILS_ENV: development
+      REDMINE_LANG: en
+      SECRET_KEY_BASE: xls-export-ci-only-secret-key-base
     steps:
-      - name: Redmine plugin test
-        uses: two-pack/redmine-plugin-test-action@v2
+      - uses: actions/checkout@v4
         with:
-          plugin_name: redmine_xls_export
-          redmine_version: ${{ matrix.redmine }}
-          ruby_version: ${{ matrix.ruby }}
+          repository: redmine/redmine
+          ref: 6.1.2
+          path: redmine
+      - uses: actions/checkout@v4
+        with:
+          path: redmine/plugins/redmine_xls_export
+      - name: Configure disposable database
+        working-directory: redmine
+        run: |
+          cat > config/database.yml <<'YAML'
+          development:
+            adapter: mysql2
+            host: 127.0.0.1
+            port: 3306
+            database: redmine_xls_test
+            username: root
+            password: redmine_test
+            encoding: utf8mb4
+          YAML
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          working-directory: redmine
+          bundler-cache: true
+      - name: Migrate and load Redmine default data
+        working-directory: redmine
+        run: bundle exec rake db:migrate redmine:load_default_data
+      - name: Check autoloading
+        working-directory: redmine
+        run: bundle exec rake zeitwerk:check
+      - name: Check exports and permissions
+        working-directory: redmine
+        run: bundle exec rails runner plugins/redmine_xls_export/test/compatibility_smoke.rb
+      - name: Check reloading
+        working-directory: redmine
+        run: bundle exec rails runner plugins/redmine_xls_export/test/reload_smoke.rb

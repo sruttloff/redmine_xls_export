@@ -1,3 +1,7 @@
+h2. Historical upstream documentation
+
+This fork is maintained for Redmine 6.1. See "README.md":README.md for current installation, usage, validation and support information. The upstream text below is preserved for historical context.
+
 h2. This repository is already archived
 
 Thank all for contributing and using this plugin.
