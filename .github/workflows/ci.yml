@@ -57,7 +57,10 @@ jobs:
           bundler-cache: true
       - name: Migrate and load Redmine default data
         working-directory: redmine
-        run: bundle exec rake db:migrate redmine:load_default_data
+        run: |
+          bundle exec rake db:migrate
+          bundle exec rake redmine:load_default_data
+          bundle exec rails runner 'abort "Redmine default data missing" unless Tracker.exists? && IssueStatus.exists? && TimeEntryActivity.exists?'
       - name: Check autoloading
         working-directory: redmine
         run: bundle exec rake zeitwerk:check
